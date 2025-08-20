@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-echo "Ejecutando migraciones de la base de datos..."
-npm run typeorm:migrate:prod
+echo "Running database migrations..."
+npm run migration:run
 
-echo "Iniciando la aplicación..."
+echo "Starting the application..."
 npm run start:prod

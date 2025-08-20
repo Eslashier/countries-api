@@ -1,0 +1,48 @@
+# Ignore node_modules (will be installed in container)
+node_modules
+npm-debug.log*
+
+# Ignore dist folder (will be built in container)
+dist
+
+# Ignore development files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore git files
+.git
+.gitignore
+
+# Ignore IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore test coverage
+coverage
+
+# Ignore logs
+logs
+*.log
+
+# Ignore temporary files
+tmp
+temp
+
+# Ignore Docker files (avoid recursion)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Ignore README and documentation that's not needed in container
+README.md
+CLAUDE.md
+*.md

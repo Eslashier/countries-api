@@ -28,7 +28,10 @@ export class ContinentService {
     });
   }
 
-  async update(id: number, continentData: Partial<Continent>): Promise<Continent> {
+  async update(
+    id: number,
+    continentData: Partial<Continent>,
+  ): Promise<Continent> {
     await this.continentRepository.update(id, continentData);
     return this.findOne(id);
   }
