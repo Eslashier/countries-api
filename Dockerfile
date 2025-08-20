@@ -1,52 +1,38 @@
-# Use Node.js 18 Alpine as base image for smaller size
-FROM node:18-alpine AS development
-
-# Set working directory inside container
-WORKDIR /usr/src/app
-
-# Copy package files first for better Docker layer caching
+# Base: define el directorio de trabajo y copia los archivos de package
+FROM node:22-alpine AS base
+WORKDIR /app
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies for build stage)
-RUN npm ci
+# Dependencies: instala todas las dependencias (dev + prod)
+FROM base AS dependencies
+RUN npm install
 
-# Copy source code
+# Builder: compila la aplicación
+FROM dependencies AS builder
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Production stage - create a smaller final image
-FROM node:18-alpine AS production
-
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
-
-# Create app user for security (don't run as root)
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nestjs -u 1001
-
-# Set working directory
-WORKDIR /usr/src/app
-
-# Copy package files
-COPY package*.json ./
-
-# Install only production dependencies
+# Production dependencies: solo dependencias de producción
+FROM base AS prod-dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy built application from development stage
-COPY --from=development /usr/src/app/dist ./dist
+# Target: imagen de producción optimizada
+FROM node:22-alpine AS production
+WORKDIR /app
 
-# Change ownership to app user
-RUN chown -R nestjs:nodejs /usr/src/app
+# Crea usuario no-root para seguridad
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+# Copia dependencias de producción
+COPY --from=prod-dependencies --chown=nestjs:nodejs /app/node_modules ./node_modules
+# Copia la aplicación compilada
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+# Copia scripts de entrada
+COPY --chown=nestjs:nodejs entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
 USER nestjs
-
-# Expose port 3000
 EXPOSE 3000
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
-# Start the application
-CMD ["node", "dist/main.js"]
+CMD ["./entrypoint.sh"]
